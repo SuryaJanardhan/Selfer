@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { Ollama } from 'ollama';
 import { BaseProvider } from './BaseProvider.js';
 import { Message, ProviderChunk, ToolDefinition } from '../types/index.js';
@@ -53,7 +54,7 @@ export class OllamaProvider extends BaseProvider {
               jsonToolCallEmitted = true;
               yield {
                 tool_use: {
-                  id: `tc-json-${Math.random().toString(36).slice(2, 11)}`,
+                  id: `tc-json-${randomUUID()}`,
                   name: jsonToolCall.name,
                   arguments: jsonToolCall.arguments,
                 }
@@ -72,7 +73,7 @@ export class OllamaProvider extends BaseProvider {
             emittedToolCalls.add(key);
             yield {
               tool_use: {
-                id: `tc-${Math.random().toString(36).slice(2, 11)}`,
+                id: `tc-${randomUUID()}`,
                 name,
                 arguments: args,
               }
@@ -126,7 +127,7 @@ export class OllamaProvider extends BaseProvider {
 
     try {
       const json = JSON.parse(candidate);
-      if (json && typeof json.name === 'string' && json.arguments) {
+      if (json && typeof json.name === 'string' && Object.prototype.hasOwnProperty.call(json, 'arguments')) {
         return {
           name: json.name,
           arguments: this.normalizeArguments(json.arguments),
@@ -142,8 +143,24 @@ export class OllamaProvider extends BaseProvider {
     const start = content.indexOf('{');
     if (start === -1) return null;
     let depth = 0;
+    let inString = false;
+    let escaped = false;
     for (let i = start; i < content.length; i++) {
       const char = content[i];
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === '\\') {
+          escaped = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (char === '"') {
+        inString = true;
+        continue;
+      }
       if (char === '{') depth += 1;
       if (char === '}') depth -= 1;
       if (depth === 0 && i > start) {
