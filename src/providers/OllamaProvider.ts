@@ -21,11 +21,11 @@ export class OllamaProvider extends BaseProvider {
     try {
       const response = await this.client.chat({
         model: this.model,
-        messages: messages.map(m => {
+        messages: messages.map((m, index) => {
           const base = { role: m.role, content: m.content };
           if (m.role !== 'tool') return base;
           if (!m.name) {
-            console.warn('Tool result is missing a name; defaulting to "tool".');
+            console.warn(`Tool result is missing a name at message index ${index}; defaulting to "tool".`);
           }
           return {
             ...base,
@@ -123,7 +123,7 @@ export class OllamaProvider extends BaseProvider {
         }
       }
     }
-    return args ?? {};
+    return args;
   }
 
   private extractJsonToolCall(content: string) {
