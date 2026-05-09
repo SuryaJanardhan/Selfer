@@ -44,17 +44,23 @@ This plan outlines the creation of "Selfer", a local-aware Linux AI agent with a
 #### [NEW] [src/index.ts](file:///media/surya/windows/Users/chint/Desktop/selfer/src/index.ts)
 - CLI entry point using `commander`.
 
+## Phase 1.5: Interactive Setup & CLI Package [CURRENT]
+- [x] Add global `bin` support in `package.json`.
+- [x] Implement interactive provider selection and API key verification.
+- [x] Create a "Claude-like" terminal UI with banners and colored roles.
+- [x] Implement shebang for global execution.
+- [x] Implement `checkConnection` for all providers.
+
 ## Phase 2: Memory & Context [PENDING]
-- Implement persistent history storage.
+- Implement persistent history storage (SQLite or JSON).
 - Add "Planner" mode for multi-step tasks.
 - Implement token counting and history compaction.
+- Support for Groq and Anthropic providers.
 
 ## Verification Plan
 
-### Automated Tests
-- We will add unit tests for the `FileSystemTool` in Phase 2.
-- Manual verification of the agent loop via CLI.
-
 ### Manual Verification
-- Run `npm start -- "Find all .txt files in the current directory"` and verify tool calls.
-- Run `npm start -- "What is the content of package.json?"`.
+1. `npm install` (Local)
+2. `npm run build`
+3. `node dist/index.js` (Verify banner and interactive selection)
+4. Verify tool calling output with new styling.

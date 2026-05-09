@@ -15,16 +15,20 @@ export class ThinkingCore {
   }
 
   async process(userInput: string) {
-    this.messages.push({ role: 'user', content: userInput });
+    // Only add to history if not already there (for initial prompt)
+    if (this.messages.length === 0 || this.messages[this.messages.length-1].content !== userInput) {
+       this.messages.push({ role: 'user', content: userInput });
+    }
     
     let turn = 0;
     while (turn < this.maxTurns) {
       turn++;
-      console.log(chalk.blue(`\n--- Turn ${turn} ---`));
       
       let assistantContent = '';
       let toolCalls: ToolCall[] = [];
       
+      process.stdout.write(chalk.bold.magenta('\nASSISTANT › '));
+
       const stream = this.provider.chat(
         this.messages,
         FileSystemTool.getDefinitions() as any
@@ -37,7 +41,8 @@ export class ThinkingCore {
         }
         if (chunk.tool_use) {
           toolCalls.push(chunk.tool_use);
-          console.log(chalk.yellow(`\n[Tool Call] ${chunk.tool_use.name}(${JSON.stringify(chunk.tool_use.arguments)})`));
+          process.stdout.write(chalk.yellow(`\n\n[Action: ${chunk.tool_use.name}]`));
+          process.stdout.write(chalk.dim(`\nArguments: ${JSON.stringify(chunk.tool_use.arguments)}`));
         }
       }
 
@@ -46,7 +51,7 @@ export class ThinkingCore {
       }
 
       if (toolCalls.length === 0) {
-        // No more tool calls, we are done
+        process.stdout.write('\n');
         break;
       }
 
@@ -59,7 +64,8 @@ export class ThinkingCore {
           name: tc.name,
           content: result
         });
-        console.log(chalk.green(`\n[Tool Result] ${tc.name} executed.`));
+        process.stdout.write(chalk.green(`\n\n[Result: Success]`));
+        process.stdout.write(chalk.dim(`\nOutput: ${result.slice(0, 100)}${result.length > 100 ? '...' : ''}\n`));
       }
     }
   }

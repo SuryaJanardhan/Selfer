@@ -7,4 +7,6 @@ export abstract class BaseProvider {
     messages: Message[],
     tools?: ToolDefinition[]
   ): AsyncGenerator<ProviderChunk>;
+
+  abstract checkConnection(): Promise<boolean>;
 }
