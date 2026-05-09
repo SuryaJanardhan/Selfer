@@ -1,3 +1,0 @@
-export const VERIFY_PLAN_EXECUTION_TOOL_NAME = 'VerifyPlanExecutionTool';
-
-export default VERIFY_PLAN_EXECUTION_TOOL_NAME;
