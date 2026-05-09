@@ -21,11 +21,14 @@ export class OllamaProvider extends BaseProvider {
     try {
       const response = await this.client.chat({
         model: this.model,
-        messages: messages.map(m => ({
-          role: m.role,
-          content: m.content,
-          ...(m.role === 'tool' && m.name ? { tool_name: m.name } : {}),
-        })),
+        messages: messages.map(m => {
+          const base = { role: m.role, content: m.content };
+          if (m.role !== 'tool') return base;
+          return {
+            ...base,
+            tool_name: m.name ?? m.tool_use_id ?? 'tool',
+          };
+        }),
         tools: tools?.map(t => ({
           type: 'function',
           function: {
@@ -127,7 +130,7 @@ export class OllamaProvider extends BaseProvider {
 
     try {
       const json = JSON.parse(candidate);
-      if (json && typeof json.name === 'string' && Object.prototype.hasOwnProperty.call(json, 'arguments')) {
+      if (json && typeof json.name === 'string' && Object.hasOwn(json, 'arguments')) {
         return {
           name: json.name,
           arguments: this.normalizeArguments(json.arguments),
