@@ -24,13 +24,12 @@ export class OllamaProvider extends BaseProvider {
         messages: messages.map(m => {
           const base = { role: m.role, content: m.content };
           if (m.role !== 'tool') return base;
-          const toolName = m.name ?? m.tool_use_id;
-          if (!toolName) {
+          if (!m.name) {
             console.warn('Tool result is missing a name; defaulting to "tool".');
           }
           return {
             ...base,
-            tool_name: toolName ?? 'tool',
+            tool_name: m.name ?? 'tool',
           };
         }),
         tools: tools?.map(t => ({
@@ -134,7 +133,7 @@ export class OllamaProvider extends BaseProvider {
 
     try {
       const json = JSON.parse(candidate);
-      if (json && typeof json === 'object' && !Array.isArray(json) && typeof json.name === 'string' && Object.hasOwn(json, 'arguments')) {
+      if (this.isValidToolCallJson(json)) {
         return {
           name: json.name,
           arguments: this.normalizeArguments(json.arguments),
@@ -175,5 +174,15 @@ export class OllamaProvider extends BaseProvider {
       }
     }
     return null;
+  }
+
+  private isValidToolCallJson(json: unknown): json is { name: string; arguments: unknown } {
+    return (
+      !!json &&
+      typeof json === 'object' &&
+      !Array.isArray(json) &&
+      typeof (json as { name?: unknown }).name === 'string' &&
+      Object.hasOwn(json as object, 'arguments')
+    );
   }
 }
