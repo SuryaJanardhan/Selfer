@@ -1,6 +1,6 @@
 # Migration Priority Report
 
-Generated at: 2026-04-16T10:58:59.427Z
+Generated at: 2026-04-22T11:17:23.558Z
 
 ## Triage Strategy
 
@@ -166,6 +166,3 @@ Generated at: 2026-04-16T10:58:59.427Z
 - src-reference/utils/plugins/docs/guide.md.js
 - src-reference/utils/plugins/extra-commands/*.md.js
 
-## Unresolved Local Imports
-
-- none
