@@ -17,7 +17,7 @@ This plan outlines the creation of "Selfer", a local-aware Linux AI agent with a
 - [x] Implement the `ThinkingCore` (Agentic Loop).
 - [x] Create a modular `Provider` system (Ollama, Gemini, Anthropic).
 - [x] Implement basic `FileSystem` tools (list, search, read).
-- [ ] Create a basic CLI entry point.
+- [x] Create a basic CLI entry point.
 
 ### Proposed Changes
 
@@ -51,11 +51,18 @@ This plan outlines the creation of "Selfer", a local-aware Linux AI agent with a
 - [x] Implement shebang for global execution.
 - [x] Implement `checkConnection` for all providers.
 
-## Phase 2: Memory & Context [PENDING]
-- Implement persistent history storage (SQLite or JSON).
-- Add "Planner" mode for multi-step tasks.
-- Implement token counting and history compaction.
-- Support for Groq and Anthropic providers.
+## Phase 2: Memory & Context [DONE]
+- [x] Implement persistent history storage (SQLite or JSON).
+- [x] Add "Planner" mode for multi-step tasks.
+- [x] Implement token counting and history compaction.
+- [x] Support for Groq and Anthropic providers.
+
+## Phase 3: Advanced Tools & Stability [PENDING]
+- Implement `ShellTool` for executing commands (with confirmation).
+- Implement `WebSearch` tool (e.g., via Tavily or Serper).
+- Add a `config` command to manage API keys and default models.
+- Implement robust error handling and auto-retry for provider timeouts.
+- Add support for "Vision" if the provider supports it (e.g., analyze screenshots).
 
 ## Verification Plan
 

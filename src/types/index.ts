@@ -35,3 +35,9 @@ export interface ToolDefinition {
     required: string[];
   };
 }
+
+export interface History {
+  messages: Message[];
+  systemPrompt?: string;
+  lastUsedProvider?: string;
+}
