@@ -8,7 +8,7 @@ export class OllamaProvider extends BaseProvider {
   private baseUrl: string;
   private model: string;
 
-  constructor(model: string = 'qwen2.5-coder:latest', baseUrl: string = 'http://localhost:11434') {
+  constructor(model: string = 'qwen2.5-coder:latest', baseUrl: string = 'http://127.0.0.1:11434') {
     super();
     this.model = model;
     this.baseUrl = baseUrl;

@@ -1,6 +1,8 @@
 import { BaseProvider } from '../providers/BaseProvider.js';
 import { FileSystemTool } from '../tools/FileSystemTool.js';
 import { PlannerTool } from '../tools/PlannerTool.js';
+import { ShellTool } from '../tools/ShellTool.js';
+import { WebSearchTool } from '../tools/WebSearchTool.js';
 import { Message, ToolCall, ToolResult } from '../types/index.js';
 import { HistoryManager } from './HistoryManager.js';
 import chalk from 'chalk';
@@ -10,15 +12,22 @@ export class ThinkingCore {
   private provider: BaseProvider;
   private tools: FileSystemTool;
   private planner: PlannerTool;
+  private shell: ShellTool;
+  private webSearch: WebSearchTool;
   private historyManager: HistoryManager;
+  private confirmHandler?: (command: string) => Promise<boolean>;
   private maxTurns = 15;
-  private maxTokens = 12000; // Rough limit for context
+  private maxTokens = 12000;
+  private spinnerInterval?: NodeJS.Timeout;
 
-  constructor(provider: BaseProvider) {
+  constructor(provider: BaseProvider, confirmHandler?: (command: string) => Promise<boolean>) {
     this.provider = provider;
     this.tools = new FileSystemTool();
     this.planner = new PlannerTool();
+    this.shell = new ShellTool();
+    this.webSearch = new WebSearchTool();
     this.historyManager = new HistoryManager();
+    this.confirmHandler = confirmHandler;
     this.loadHistory();
   }
 
@@ -27,7 +36,21 @@ export class ThinkingCore {
     this.messages = history.messages;
     
     // If we have a system prompt and no messages, or if the first message isn't system
-    const systemPrompt = history.systemPrompt || "You are Selfer, a local-aware Linux AI agent. You have access to the file system. Be concise and accurate.";
+    const defaultSystemPrompt = `You are Selfer, an elite local-aware Linux AI agent. 
+You are running on the user's local machine (Elementary OS 8).
+Your primary goal is to assist the user with file management, system information, and complex planning.
+
+### CRITICAL RULES:
+1. RESPONSE FORMAT: Only provide the direct answer or confirmation of the task. 
+2. NO FLUFF: Do not explain what you did, do not provide "next steps", and do not summarize.
+3. TOOL USE: Use tools to get facts. Do not hallucinate paths.
+4. CONCISENESS: One or two sentences maximum for any response.
+5. SHELL: Use 'execute_command' for most bash tasks as requested by the user, except for destructive 'rm -rf' on large directories.
+
+Current Environment: Linux (Elementary OS 8)
+`;
+    
+    const systemPrompt = history.systemPrompt || defaultSystemPrompt;
     
     if (this.messages.length === 0 || this.messages[0].role !== 'system') {
       this.messages.unshift({ role: 'system', content: systemPrompt });
@@ -57,6 +80,24 @@ export class ThinkingCore {
     }
   }
 
+  private startSpinner(text: string) {
+    const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    let i = 0;
+    process.stdout.write('\r' + chalk.cyan(frames[0]) + ' ' + text);
+    this.spinnerInterval = setInterval(() => {
+      i = (i + 1) % frames.length;
+      process.stdout.write('\r' + chalk.cyan(frames[i]) + ' ' + text);
+    }, 80);
+  }
+
+  private stopSpinner() {
+    if (this.spinnerInterval) {
+      clearInterval(this.spinnerInterval);
+      process.stdout.write('\r' + ' '.repeat(process.stdout.columns || 50) + '\r');
+      this.spinnerInterval = undefined;
+    }
+  }
+
   async process(userInput: string) {
     // Only add to history if not already there (for initial prompt)
     if (this.messages.length === 0 || this.messages[this.messages.length-1].content !== userInput) {
@@ -73,22 +114,39 @@ export class ThinkingCore {
       let assistantContent = '';
       let toolCalls: ToolCall[] = [];
       
-      process.stdout.write(chalk.bold.magenta('\nASSISTANT › '));
+      this.startSpinner('Thinking...');
 
-      const stream = this.provider.chat(
-        this.messages,
-        [...FileSystemTool.getDefinitions(), ...PlannerTool.getDefinitions()] as any
-      );
+      let stream: any;
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          stream = this.provider.chat(
+            this.messages,
+            [
+              ...FileSystemTool.getDefinitions(),
+              ...PlannerTool.getDefinitions(),
+              ...ShellTool.getDefinitions(),
+              ...WebSearchTool.getDefinitions()
+            ] as any
+          );
+          break;
+        } catch (e: any) {
+          retries--;
+          if (retries === 0) throw e;
+          process.stdout.write(chalk.yellow(`\n[Retry: ${e.message}. Retrying...]`));
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
 
       for await (const chunk of stream) {
+        this.stopSpinner();
         if (chunk.content) {
           assistantContent += chunk.content;
           process.stdout.write(chunk.content);
         }
         if (chunk.tool_use) {
           toolCalls.push(chunk.tool_use);
-          process.stdout.write(chalk.yellow(`\n\n[Action: ${chunk.tool_use.name}]`));
-          process.stdout.write(chalk.dim(`\nArguments: ${JSON.stringify(chunk.tool_use.arguments)}`));
+          process.stdout.write(chalk.dim(`\n\n[${chunk.tool_use.name}]`));
         }
       }
 
@@ -104,12 +162,28 @@ export class ThinkingCore {
 
       // Execute tools
       for (const tc of toolCalls) {
+        this.startSpinner(`Executing ${tc.name}...`);
         let result: string;
         if (tc.name === 'generate_plan') {
            result = await this.planner.execute(tc.name, tc.arguments);
+        } else if (tc.name === 'execute_command') {
+           this.stopSpinner();
+           if (this.confirmHandler) {
+             const confirmed = await this.confirmHandler(tc.arguments.command);
+             if (!confirmed) {
+               result = 'User rejected command execution.';
+             } else {
+               result = await this.shell.execute(tc.name, tc.arguments);
+             }
+           } else {
+             result = await this.shell.execute(tc.name, tc.arguments);
+           }
+        } else if (tc.name === 'web_search') {
+           result = await this.webSearch.execute(tc.name, tc.arguments);
         } else {
            result = await this.tools.execute(tc.name, tc.arguments);
         }
+        this.stopSpinner();
         
         this.messages.push({
           role: 'tool',
@@ -117,8 +191,6 @@ export class ThinkingCore {
           name: tc.name,
           content: result
         });
-        process.stdout.write(chalk.green(`\n\n[Result: Success]`));
-        process.stdout.write(chalk.dim(`\nOutput: ${result.slice(0, 100)}${result.length > 100 ? '...' : ''}\n`));
         await this.saveHistory();
       }
     }

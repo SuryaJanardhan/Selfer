@@ -10,7 +10,7 @@ This plan outlines the creation of "Selfer", a local-aware Linux AI agent with a
 > [!NOTE]
 > Phase 1 focuses on the core orchestration and a "Working Prototype" that can search files and answer questions using Ollama (default) or other providers.
 
-## Phase 1: Basic Prototype & Core Orchestration [CURRENT]
+## Phase 1: Basic Prototype & Core Orchestration [DONE]
 
 ### Goals
 - [x] Initialize the Node.js TypeScript project.
@@ -19,32 +19,7 @@ This plan outlines the creation of "Selfer", a local-aware Linux AI agent with a
 - [x] Implement basic `FileSystem` tools (list, search, read).
 - [x] Create a basic CLI entry point.
 
-### Proposed Changes
-
-#### [NEW] [package.json](file:///media/surya/windows/Users/chint/Desktop/selfer/package.json)
-- Define project dependencies and scripts.
-- Set up as a module for NPM compatibility.
-
-#### [NEW] [tsconfig.json](file:///media/surya/windows/Users/chint/Desktop/selfer/tsconfig.json)
-- TypeScript configuration for modern Node.js.
-
-#### [NEW] [src/core/ThinkingCore.ts](file:///media/surya/windows/Users/chint/Desktop/selfer/src/core/ThinkingCore.ts)
-- The main orchestration loop.
-- Manages message history, tool calls, and turns.
-
-#### [NEW] [src/providers/BaseProvider.ts](file:///media/surya/windows/Users/chint/Desktop/selfer/src/providers/BaseProvider.ts)
-- Abstract class for model providers.
-
-#### [NEW] [src/providers/OllamaProvider.ts](file:///media/surya/windows/Users/chint/Desktop/selfer/src/providers/OllamaProvider.ts)
-- Implementation for local models via Ollama.
-
-#### [NEW] [src/tools/FileSystemTool.ts](file:///media/surya/windows/Users/chint/Desktop/selfer/src/tools/FileSystemTool.ts)
-- Basic tools: `ls`, `search`, `cat`.
-
-#### [NEW] [src/index.ts](file:///media/surya/windows/Users/chint/Desktop/selfer/src/index.ts)
-- CLI entry point using `commander`.
-
-## Phase 1.5: Interactive Setup & CLI Package [CURRENT]
+## Phase 1.5: Interactive Setup & CLI Package [DONE]
 - [x] Add global `bin` support in `package.json`.
 - [x] Implement interactive provider selection and API key verification.
 - [x] Create a "Claude-like" terminal UI with banners and colored roles.
@@ -57,12 +32,12 @@ This plan outlines the creation of "Selfer", a local-aware Linux AI agent with a
 - [x] Implement token counting and history compaction.
 - [x] Support for Groq and Anthropic providers.
 
-## Phase 3: Advanced Tools & Stability [PENDING]
-- Implement `ShellTool` for executing commands (with confirmation).
-- Implement `WebSearch` tool (e.g., via Tavily or Serper).
-- Add a `config` command to manage API keys and default models.
-- Implement robust error handling and auto-retry for provider timeouts.
-- Add support for "Vision" if the provider supports it (e.g., analyze screenshots).
+## Phase 3: Advanced Tools & Stability [DONE]
+- [x] Implement `ShellTool` for executing commands (with confirmation).
+- [x] Implement `WebSearch` tool (via Serper).
+- [x] Add a `config` command to manage API keys and default models.
+- [x] Implement robust error handling and auto-retry for provider timeouts.
+- [x] Add support for "Vision" (via provider-native capabilities).
 
 ## Verification Plan
 
